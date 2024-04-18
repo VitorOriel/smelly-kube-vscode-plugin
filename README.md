@@ -1,0 +1,1 @@
+# mestrado-vscode-plugin
