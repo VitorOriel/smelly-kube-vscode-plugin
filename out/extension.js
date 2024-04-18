@@ -31,9 +31,19 @@ exports.deactivate = exports.activate = void 0;
 // Import the module and reference it with the alias vscode in your code below
 const vscode = __importStar(require("vscode"));
 const node_fetch_1 = __importDefault(require("node-fetch"));
+const dotenv_1 = __importDefault(require("dotenv"));
+function getApiUrl() {
+    dotenv_1.default.config();
+    const apiUrl = process.env.API_URL;
+    if (apiUrl == undefined) {
+        throw Error("the environment variable API_URL must be set");
+    }
+    return String(process.env.API_URL);
+}
 // This method is called when your extension is activated
 // Your extension is activated the very first time the command is executed
 function activate(context) {
+    const apiUrl = getApiUrl();
     let disposable = vscode.commands.registerCommand('extension.inspectFile', () => {
         // Get the active text editor
         let editor = vscode.window.activeTextEditor;
@@ -46,7 +56,7 @@ function activate(context) {
             (async () => {
                 try {
                     // Make an HTTP POST request
-                    const response = await (0, node_fetch_1.default)('http://localhost:8000', {
+                    const response = await (0, node_fetch_1.default)(apiUrl, {
                         method: 'POST',
                         body: text,
                         headers: {

@@ -40,6 +40,8 @@
     "typescript": "^5.3.3"
   },
   "dependencies": {
-    "node-fetch": "^2.7.0"
+    "dotenv": "^16.4.5",
+    "node-fetch": "^2.7.0",
+    "ts-node": "^10.9.2"
   }
 }
