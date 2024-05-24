@@ -51,16 +51,18 @@ function activate(context) {
             // Get the document associated with the active text editor
             let document = editor.document;
             // Get the text content of the document
-            let text = document.getText();
-            vscode.window.showInformationMessage(`Sucessfully reat the file, len: ${text.length}`);
+            const bodyData = {
+                fileName: document.fileName,
+                yamlToValidate: document.getText(),
+            };
             (async () => {
                 try {
                     // Make an HTTP POST request
                     const response = await (0, node_fetch_1.default)(apiUrl, {
                         method: 'POST',
-                        body: text,
+                        body: JSON.stringify(bodyData),
                         headers: {
-                            'Content-Type': 'text/plain'
+                            'Content-Type': 'application/json',
                         }
                     });
                     // Check if the request was successful (status code 2xx)
