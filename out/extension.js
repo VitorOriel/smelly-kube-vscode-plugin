@@ -67,8 +67,17 @@ function activate(context) {
                     });
                     // Check if the request was successful (status code 2xx)
                     if (response.ok) {
-                        let data = await response.json(); // Parse response body as JSON
-                        vscode.window.showInformationMessage('Request successful. Response: ' + JSON.stringify(data));
+                        const data = await response.json();
+                        vscode.window.showInformationMessage('Number of vulnerabilities found: ' + data['totalOfSmells']);
+                        for (const [key, value] of Object.entries(data)) {
+                            if (key !== 'totalOfSmells') {
+                                if (Array.isArray(value) && value.length > 0) {
+                                    for (const v of value) {
+                                        vscode.window.showWarningMessage("Vulnerability found: " + v.message + '\nFix: ' + v.suggestion);
+                                    }
+                                }
+                            }
+                        }
                     }
                     else {
                         vscode.window.showErrorMessage('Request failed with status: ' + response.status);
