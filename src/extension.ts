@@ -9,8 +9,11 @@ type Workload = {
 	suggestion: string
 }
 
-type Response = {
+type Meta = {
 	totalOfSmells: number
+}
+
+type Data = {
 	smellsReplicaSet: Workload[]
 	smellsDeployment: Workload[]
 	smellsPod: Workload[]
@@ -20,6 +23,11 @@ type Response = {
 	smellDemonSet: Workload[]
 }
 
+type Response = {
+	meta: Meta
+	data: Data
+}
+
 function getApiUrl(): string {
 	dotenv.config();
 	const apiUrl = process.env.API_URL;
@@ -27,6 +35,32 @@ function getApiUrl(): string {
 		throw Error("the environment variable API_URL must be set");
 	}
 	return String(process.env.API_URL);
+}
+
+function sendFile(apiUrl: string, bodyData: any): Promise<Response | undefined> {
+	return new Promise<Response | undefined>(async (resolve, reject) => {
+		try {
+			// Make an HTTP POST request
+			const response = await fetch(apiUrl, {
+				method: 'POST',
+				body: JSON.stringify(bodyData),
+				headers: {
+					'Content-Type': 'application/json',
+				}
+			});
+			// Check if the request was successful (status code 2xx)
+			if (response.ok) {
+				const data = await response.json() as Response;
+				resolve(data);
+			} else {
+				vscode.window.showErrorMessage('Request failed with status: ' + response.status);
+				resolve(undefined);
+			}
+		} catch (error) {
+			vscode.window.showErrorMessage('Error making request: ' + error);
+			resolve(undefined);
+		}
+	});
 }
 
 // This method is called when your extension is activated
@@ -45,36 +79,18 @@ export function activate(context: vscode.ExtensionContext) {
 				fileName: document.fileName,
 				yamlToValidate: document.getText(),
 			};
-            (async () => {
-				try {
-					// Make an HTTP POST request
-					const response = await fetch(apiUrl, {
-						method: 'POST',
-						body: JSON.stringify(bodyData),
-						headers: {
-							'Content-Type': 'application/json',
-						}
-					});
-					// Check if the request was successful (status code 2xx)
-					if (response.ok) {
-						const data = await response.json() as Response;
-						vscode.window.showInformationMessage('Number of vulnerabilities found: ' + data['totalOfSmells']);
-						for (const [key, value] of Object.entries(data)) {
-							if (key !== 'totalOfSmells') {
-								if (Array.isArray(value) && value.length > 0) {
-									for (const v of value) {
-										vscode.window.showWarningMessage("Vulnerability found: " + v.message + '\nFix: ' + v.suggestion);
-									}
-								}
+			sendFile(apiUrl, bodyData).then(data => {
+				if (data !== undefined) {
+					vscode.window.showInformationMessage('Number of vulnerabilities found: ' + data.meta.totalOfSmells);
+					for (const [key, value] of Object.entries(data.data)) {
+						if (Array.isArray(value) && value.length > 0) {
+							for (const v of value) {
+								vscode.window.showWarningMessage("Vulnerability found: " + v.message + '\nFix: ' + v.suggestion);
 							}
 						}
-					} else {
-						vscode.window.showErrorMessage('Request failed with status: ' + response.status);
 					}
-				} catch (error) {
-					vscode.window.showErrorMessage('Error making request: ' + error);
 				}
-			})();
+			});
         } else {
             vscode.window.showErrorMessage('No active text editor.');
         }
