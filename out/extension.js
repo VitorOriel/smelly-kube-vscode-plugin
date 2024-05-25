@@ -67,38 +67,47 @@ function sendFile(apiUrl, bodyData) {
         }
     });
 }
-function decorateLines(editor, context, data) {
+function getHoverMessage(workloads) {
+    let message = "";
+    workloads.forEach((workload) => {
+        message = message.concat(`\tIssue: ${workload.message}\n\tFix: ${workload.suggestion}`);
+        message = message.concat("\n\n", "─".repeat(40), "\n\n");
+    });
+    return message;
+}
+function decorateLines(editor, context, workloads) {
     const document = editor.document;
     const lines = document.getText().split('\n');
-    let workloadPositions = [];
+    let workloadPositionsInText = [];
     if (lines[0] !== "---") {
-        workloadPositions.push(0);
+        workloadPositionsInText.push(0);
     }
     for (const [i, value] of lines.entries()) {
         if (value === "---") {
-            workloadPositions.push(i + 1);
+            workloadPositionsInText.push(i + 1);
         }
     }
     // Define a decoration type with red background for the first line and a gutter icon
     const decorationType = vscode.window.createTextEditorDecorationType({
         backgroundColor: 'rgba(255, 0, 0, 0.3)', // Red background color with opacity
     });
-    // // Define a hover provider to display information when the user hovers over the gutter icon
-    // const hoverProvider = vscode.languages.registerHoverProvider(document.languageId, {
-    //     provideHover: (document, position, token) => {
-    //         // Check if the position is within the range of the decorated lines
-    //         if (workloads.some(workload => position.line >= document.positionAt(workload.indexOf('\n')).line && position.line <= document.positionAt(workload.indexOf('\n')).line)) {
-    //             return new vscode.Hover('There is a problem with this line. Hold the mouse over the icon to see details.'); // Placeholder text
-    //         }
-    //     }
-    // });
-    const ranges = [];
-    workloadPositions.forEach(position => {
-        const lineRange = document.lineAt(position).range;
-        ranges.push(lineRange);
+    // Define a hover provider to display information when the user hovers over the gutter icon
+    const hoverProvider = vscode.languages.registerHoverProvider(document.languageId, {
+        provideHover: (document, position, token) => {
+            for (const workload of workloads) {
+                if (position.line == workloadPositionsInText[workload.workload_position]) {
+                    return new vscode.Hover(getHoverMessage(workloads.filter(w => w.workload_position === workload.workload_position)));
+                }
+            }
+        }
     });
-    editor.setDecorations(decorationType, ranges);
-    // context.subscriptions.push(hoverProvider);
+    // const ranges: vscode.Range[] = [];
+    // workloadPositionsInText.forEach(position => {
+    // 	const lineRange = document.lineAt(position).range;
+    //     ranges.push(lineRange);
+    // });
+    // editor.setDecorations(decorationType, ranges);
+    context.subscriptions.push(hoverProvider);
 }
 // This method is called when your extension is activated
 // Your extension is activated the very first time the command is executed
@@ -121,14 +130,14 @@ function activate(context) {
         sendFile(apiUrl, bodyData).then(data => {
             if (data !== undefined) {
                 vscode.window.showInformationMessage('Number of vulnerabilities found: ' + data.meta.totalOfSmells);
-                for (const [key, value] of Object.entries(data.data)) {
-                    if (Array.isArray(value) && value.length > 0) {
-                        for (const v of value) {
-                            vscode.window.showWarningMessage("Vulnerability found: " + v.message + '\nFix: ' + v.suggestion);
-                        }
+                const workloads = [];
+                for (const [_, value] of Object.entries(data.data)) {
+                    for (const workload of value) {
+                        workloads.push(workload);
                     }
                 }
-                decorateLines(editor, context, data.data);
+                workloads.sort((a, b) => a.workload_position - b.workload_position);
+                decorateLines(editor, context, workloads);
             }
         });
     });
