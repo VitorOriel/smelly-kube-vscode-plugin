@@ -99,12 +99,18 @@ function decorateLines(editor: vscode.TextEditor, context: vscode.ExtensionConte
 			}
         }
     });
-	// const ranges: vscode.Range[] = [];
-    // workloadPositionsInText.forEach(position => {
-	// 	const lineRange = document.lineAt(position).range;
-    //     ranges.push(lineRange);
-    // });
-	// editor.setDecorations(decorationType, ranges);
+	const uniqueWorkloads = workloads.reduce((acc: Workload[], current: Workload) => {
+		if (!acc.some(item => item.workload_position === current.workload_position)) {
+			acc.push(current);
+		}
+		return acc;
+	}, []);
+	const ranges: vscode.Range[] = [];
+    uniqueWorkloads.forEach(workload => {
+		const lineRange = document.lineAt(workloadPositionsInText[workload.workload_position]).range;
+        ranges.push(lineRange);
+    });
+	editor.setDecorations(decorationType, ranges);
     context.subscriptions.push(hoverProvider);
 }
 

@@ -101,12 +101,18 @@ function decorateLines(editor, context, workloads) {
             }
         }
     });
-    // const ranges: vscode.Range[] = [];
-    // workloadPositionsInText.forEach(position => {
-    // 	const lineRange = document.lineAt(position).range;
-    //     ranges.push(lineRange);
-    // });
-    // editor.setDecorations(decorationType, ranges);
+    const uniqueWorkloads = workloads.reduce((acc, current) => {
+        if (!acc.some(item => item.workload_position === current.workload_position)) {
+            acc.push(current);
+        }
+        return acc;
+    }, []);
+    const ranges = [];
+    uniqueWorkloads.forEach(workload => {
+        const lineRange = document.lineAt(workloadPositionsInText[workload.workload_position]).range;
+        ranges.push(lineRange);
+    });
+    editor.setDecorations(decorationType, ranges);
     context.subscriptions.push(hoverProvider);
 }
 // This method is called when your extension is activated
