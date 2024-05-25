@@ -67,6 +67,22 @@ function sendFile(apiUrl, bodyData) {
         }
     });
 }
+function decorateLines(editor, text) {
+    const document = editor.document;
+    // Split the text into workloads based on the delimiter '---'
+    const workloads = text.split('---').map(workload => workload.trim()).filter(workload => workload.length > 0);
+    // Define a decoration type with red background for the first line
+    const decorationType = vscode.window.createTextEditorDecorationType({
+        backgroundColor: 'rgba(255, 0, 0, 0.3)' // Red background color with opacity
+    });
+    // Iterate over each workload and color the background of the first line
+    workloads.forEach(workload => {
+        // Get the range of the first line
+        const firstLineRange = new vscode.Range(document.positionAt(0), document.positionAt(workload.indexOf('\n')));
+        // Add the decoration to the editor
+        editor.setDecorations(decorationType, [{ range: firstLineRange }]);
+    });
+}
 // This method is called when your extension is activated
 // Your extension is activated the very first time the command is executed
 function activate(context) {
@@ -74,30 +90,30 @@ function activate(context) {
     let disposable = vscode.commands.registerCommand('extension.inspectFile', () => {
         // Get the active text editor
         let editor = vscode.window.activeTextEditor;
-        if (editor) {
-            // Get the document associated with the active text editor
-            let document = editor.document;
-            // Get the text content of the document
-            const bodyData = {
-                fileName: document.fileName,
-                yamlToValidate: document.getText(),
-            };
-            sendFile(apiUrl, bodyData).then(data => {
-                if (data !== undefined) {
-                    vscode.window.showInformationMessage('Number of vulnerabilities found: ' + data.meta.totalOfSmells);
-                    for (const [key, value] of Object.entries(data.data)) {
-                        if (Array.isArray(value) && value.length > 0) {
-                            for (const v of value) {
-                                vscode.window.showWarningMessage("Vulnerability found: " + v.message + '\nFix: ' + v.suggestion);
-                            }
+        if (!editor) {
+            vscode.window.showErrorMessage('No active text editor.');
+            return;
+        }
+        // Get the document associated with the active text editor
+        let document = editor.document;
+        // Get the text content of the document
+        const bodyData = {
+            fileName: document.fileName,
+            yamlToValidate: document.getText(),
+        };
+        sendFile(apiUrl, bodyData).then(data => {
+            if (data !== undefined) {
+                vscode.window.showInformationMessage('Number of vulnerabilities found: ' + data.meta.totalOfSmells);
+                for (const [key, value] of Object.entries(data.data)) {
+                    if (Array.isArray(value) && value.length > 0) {
+                        for (const v of value) {
+                            vscode.window.showWarningMessage("Vulnerability found: " + v.message + '\nFix: ' + v.suggestion);
                         }
                     }
                 }
-            });
-        }
-        else {
-            vscode.window.showErrorMessage('No active text editor.');
-        }
+            }
+            decorateLines(editor, document.getText());
+        });
     });
     context.subscriptions.push(disposable);
 }
