@@ -64,14 +64,26 @@ function sendFile(apiUrl: string, bodyData: any): Promise<Response | undefined> 
 	});
 }
 
-function decorateLines(editor: vscode.TextEditor, text: string) {
+function decorateLines(editor: vscode.TextEditor, context: vscode.ExtensionContext) {
 	const document = editor.document;
 	// Split the text into workloads based on the delimiter '---'
-	const workloads = text.split('---').map(workload => workload.trim()).filter(workload => workload.length > 0);
+	const workloads = editor.document.getText().split('---').map(workload => workload.trim()).filter(workload => workload.length > 0);
 
-	// Define a decoration type with red background for the first line
+	// Define a decoration type with red background for the first line and a gutter icon
     const decorationType = vscode.window.createTextEditorDecorationType({
-        backgroundColor: 'rgba(255, 0, 0, 0.3)' // Red background color with opacity
+        backgroundColor: 'rgba(255, 0, 0, 0.3)', // Red background color with opacity
+        gutterIconPath: context.asAbsolutePath('resources/circle-red.svg'), // Path to the red circle icon
+        gutterIconSize: 'contain' // Size of the gutter icon
+    });
+
+    // Define a hover provider to display information when the user hovers over the gutter icon
+    const hoverProvider = vscode.languages.registerHoverProvider(document.languageId, {
+        provideHover: (document, position, token) => {
+            // Check if the position is within the range of the decorated lines
+            if (workloads.some(workload => position.line >= document.positionAt(workload.indexOf('\n')).line && position.line <= document.positionAt(workload.indexOf('\n')).line)) {
+                return new vscode.Hover('There is a problem with this line. Hold the mouse over the icon to see details.'); // Placeholder text
+            }
+        }
     });
 
     // Iterate over each workload and color the background of the first line
@@ -82,6 +94,9 @@ function decorateLines(editor: vscode.TextEditor, text: string) {
         // Add the decoration to the editor
         editor.setDecorations(decorationType, [{ range: firstLineRange }]);
     });
+
+    // Subscribe hover provider to the context subscriptions
+    context.subscriptions.push(hoverProvider);
 }
 
 // This method is called when your extension is activated
@@ -114,7 +129,7 @@ export function activate(context: vscode.ExtensionContext) {
 					}
 				}
 			}
-			decorateLines(editor, document.getText());
+			decorateLines(editor, context);
 		});
     });
 	context.subscriptions.push(disposable);

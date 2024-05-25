@@ -67,13 +67,24 @@ function sendFile(apiUrl, bodyData) {
         }
     });
 }
-function decorateLines(editor, text) {
+function decorateLines(editor, context) {
     const document = editor.document;
     // Split the text into workloads based on the delimiter '---'
-    const workloads = text.split('---').map(workload => workload.trim()).filter(workload => workload.length > 0);
-    // Define a decoration type with red background for the first line
+    const workloads = editor.document.getText().split('---').map(workload => workload.trim()).filter(workload => workload.length > 0);
+    // Define a decoration type with red background for the first line and a gutter icon
     const decorationType = vscode.window.createTextEditorDecorationType({
-        backgroundColor: 'rgba(255, 0, 0, 0.3)' // Red background color with opacity
+        backgroundColor: 'rgba(255, 0, 0, 0.3)', // Red background color with opacity
+        gutterIconPath: context.asAbsolutePath('resources/circle-red.svg'), // Path to the red circle icon
+        gutterIconSize: 'contain' // Size of the gutter icon
+    });
+    // Define a hover provider to display information when the user hovers over the gutter icon
+    const hoverProvider = vscode.languages.registerHoverProvider(document.languageId, {
+        provideHover: (document, position, token) => {
+            // Check if the position is within the range of the decorated lines
+            if (workloads.some(workload => position.line >= document.positionAt(workload.indexOf('\n')).line && position.line <= document.positionAt(workload.indexOf('\n')).line)) {
+                return new vscode.Hover('There is a problem with this line. Hold the mouse over the icon to see details.'); // Placeholder text
+            }
+        }
     });
     // Iterate over each workload and color the background of the first line
     workloads.forEach(workload => {
@@ -82,6 +93,8 @@ function decorateLines(editor, text) {
         // Add the decoration to the editor
         editor.setDecorations(decorationType, [{ range: firstLineRange }]);
     });
+    // Subscribe hover provider to the context subscriptions
+    context.subscriptions.push(hoverProvider);
 }
 // This method is called when your extension is activated
 // Your extension is activated the very first time the command is executed
@@ -112,7 +125,7 @@ function activate(context) {
                     }
                 }
             }
-            decorateLines(editor, document.getText());
+            decorateLines(editor, context);
         });
     });
     context.subscriptions.push(disposable);
