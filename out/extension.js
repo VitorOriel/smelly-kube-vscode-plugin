@@ -67,6 +67,16 @@ function sendFile(apiUrl, bodyData) {
         }
     });
 }
+function getWorkloadsFromResponse(data) {
+    const workloads = [];
+    for (const [_, value] of Object.entries(data.data)) {
+        for (const workload of value) {
+            workloads.push(workload);
+        }
+    }
+    workloads.sort((a, b) => a.workload_position - b.workload_position);
+    return workloads;
+}
 function getHoverMessage(workloads) {
     let message = "";
     workloads.forEach((workload) => {
@@ -118,7 +128,7 @@ function decorateLines(editor, context, workloads) {
 // This method is called when your extension is activated
 // Your extension is activated the very first time the command is executed
 function activate(context) {
-    const apiUrl = getApiUrl();
+    const apiUrl = "http://localhost:3000/api/v1/smelly";
     let disposable = vscode.commands.registerCommand('extension.inspectFile', () => {
         // Get the active text editor
         let editor = vscode.window.activeTextEditor;
@@ -133,17 +143,10 @@ function activate(context) {
             fileName: document.fileName,
             yamlToValidate: document.getText(),
         };
-        sendFile(apiUrl, bodyData).then(data => {
-            if (data !== undefined) {
-                vscode.window.showInformationMessage('Number of vulnerabilities found: ' + data.meta.totalOfSmells);
-                const workloads = [];
-                for (const [_, value] of Object.entries(data.data)) {
-                    for (const workload of value) {
-                        workloads.push(workload);
-                    }
-                }
-                workloads.sort((a, b) => a.workload_position - b.workload_position);
-                decorateLines(editor, context, workloads);
+        sendFile(apiUrl, bodyData).then(responseJson => {
+            if (responseJson !== undefined) {
+                vscode.window.showInformationMessage('Number of vulnerabilities found: ' + responseJson.meta.totalOfSmells);
+                decorateLines(editor, context, getWorkloadsFromResponse(responseJson));
             }
         });
     });

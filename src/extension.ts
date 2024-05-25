@@ -64,6 +64,17 @@ function sendFile(apiUrl: string, bodyData: any): Promise<Response | undefined> 
 	});
 }
 
+function getWorkloadsFromResponse(data: Response): Workload[] {
+	const workloads: Workload[] = [];
+	for (const [_, value] of Object.entries(data.data)) {
+		for (const workload of value) {
+			workloads.push(workload)
+		}
+	}
+	workloads.sort((a, b) => a.workload_position - b.workload_position);
+	return workloads;
+}
+
 function getHoverMessage(workloads: Workload[]): string {
 	let message: string = "";
 	workloads.forEach((workload) => {
@@ -117,7 +128,7 @@ function decorateLines(editor: vscode.TextEditor, context: vscode.ExtensionConte
 // This method is called when your extension is activated
 // Your extension is activated the very first time the command is executed
 export function activate(context: vscode.ExtensionContext) {
-	const apiUrl = getApiUrl();
+	const apiUrl = "http://localhost:3000/api/v1/smelly";
 	
 	let disposable = vscode.commands.registerCommand('extension.inspectFile', () => {
         // Get the active text editor
@@ -133,17 +144,10 @@ export function activate(context: vscode.ExtensionContext) {
 			fileName: document.fileName,
 			yamlToValidate: document.getText(),
 		};
-		sendFile(apiUrl, bodyData).then(data => {
-			if (data !== undefined) {
-				vscode.window.showInformationMessage('Number of vulnerabilities found: ' + data.meta.totalOfSmells);
-				const workloads: Workload[] = [];
-				for (const [_, value] of Object.entries(data.data)) {
-					for (const workload of value) {
-						workloads.push(workload)
-					}
-				}
-				workloads.sort((a, b) => a.workload_position - b.workload_position);
-				decorateLines(editor, context, workloads);
+		sendFile(apiUrl, bodyData).then(responseJson => {
+			if (responseJson !== undefined) {
+				vscode.window.showInformationMessage('Number of vulnerabilities found: ' + responseJson.meta.totalOfSmells);
+				decorateLines(editor, context, getWorkloadsFromResponse(responseJson));
 			}
 		});
     });
