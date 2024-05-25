@@ -128,7 +128,7 @@ function decorateLines(editor, context, workloads) {
 // This method is called when your extension is activated
 // Your extension is activated the very first time the command is executed
 function activate(context) {
-    const apiUrl = "http://localhost:3000/api/v1/smelly";
+    const apiUrl = getApiUrl();
     let disposable = vscode.commands.registerCommand('extension.inspectFile', () => {
         // Get the active text editor
         let editor = vscode.window.activeTextEditor;
