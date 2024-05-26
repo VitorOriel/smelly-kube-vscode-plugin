@@ -3,16 +3,21 @@ import * as vscode from 'vscode';
 import { SmellKubernetes, Response, RequestError } from './models';
 import { sendFile } from './requests';
 
-export namespace pluginCommands {
+interface HoverProviderInfo {
+    disposable: vscode.Disposable;
+    fileName: string;
+}
+
+const hoverProviders: Map<vscode.TextDocument, HoverProviderInfo> = new Map();
+
+export namespace events {
     export function analyzeFile(context: vscode.ExtensionContext, apiUrl: string) {
         let editor = vscode.window.activeTextEditor;
         if (!editor) {
 			vscode.window.showErrorMessage('No active text editor.');
 			return;
 		}
-		// Get the document associated with the active text editor
 		let document = editor.document;
-		// Get the text content of the document
 		const bodyData = {
 			fileName: document.fileName,
 			yamlToValidate: document.getText(),
@@ -20,12 +25,19 @@ export namespace pluginCommands {
 		sendFile(apiUrl, bodyData)
 			.then((responseJson: Response) => {
 				vscode.window.showInformationMessage('Number of vulnerabilities found: ' + responseJson.meta.totalOfSmells);
-				decorateLines(editor, context, getSmellKubernetessFromResponse(responseJson));
+				decorateLines(context, editor, getSmellKubernetessFromResponse(responseJson));
 			})
 			.catch((error: RequestError) => {
 				vscode.window.showErrorMessage('Error occurred:', error.message);
 			});
     }
+
+	export function onCloseFile(document: vscode.TextDocument) {
+		const providerInfo = hoverProviders.get(document);
+		if (providerInfo !== undefined) {
+			providerInfo.disposable.dispose();
+		}
+	}
 }
 
 function getSmellKubernetessFromResponse(data: Response): SmellKubernetes[] {
@@ -48,7 +60,39 @@ function getHoverMessage(workloads: SmellKubernetes[]): string {
 	return message;
 }
 
-function decorateLines(editor: vscode.TextEditor, context: vscode.ExtensionContext, workloads: SmellKubernetes[]) {
+function registerHover(context: vscode.ExtensionContext, document: vscode.TextDocument, workloads: SmellKubernetes[], workloadPositionsInText: number[]) {
+	const hoverProvider = vscode.languages.registerHoverProvider(document.languageId, {
+        provideHover: (document, position, token) => {
+			for (const workload of workloads) {
+				if (position.line == workloadPositionsInText[workload.workload_position]) {
+					return new vscode.Hover(getHoverMessage(workloads.filter(w => w.workload_position === workload.workload_position)));
+				}
+			}
+        }
+    });
+	context.subscriptions.push(hoverProvider);
+	hoverProviders.set(document, {disposable: hoverProvider, fileName: document.fileName} as HoverProviderInfo);
+}
+
+function colourLine(editor: vscode.TextEditor, workloads: SmellKubernetes[], workloadPositionsInText: number[]) {
+	const decorationType = vscode.window.createTextEditorDecorationType({
+        backgroundColor: 'rgba(255, 0, 0, 0.3)',
+    });
+	const uniqueSmellKubernetess = workloads.reduce((acc: SmellKubernetes[], current: SmellKubernetes) => {
+		if (!acc.some(item => item.workload_position === current.workload_position)) {
+			acc.push(current);
+		}
+		return acc;
+	}, []);
+	const ranges: vscode.Range[] = [];
+    uniqueSmellKubernetess.forEach(workload => {
+		const lineRange = editor.document.lineAt(workloadPositionsInText[workload.workload_position]).range;
+        ranges.push(lineRange);
+    });
+	editor.setDecorations(decorationType, ranges);
+}
+
+function decorateLines(context: vscode.ExtensionContext, editor: vscode.TextEditor, workloads: SmellKubernetes[]) {
 	const document = editor.document;
 	const lines = document.getText().split('\n');
 	let workloadPositionsInText: number[] = [];
@@ -60,31 +104,6 @@ function decorateLines(editor: vscode.TextEditor, context: vscode.ExtensionConte
 			workloadPositionsInText.push(i+1);
 		}
 	}
-	// Define a decoration type with red background for the first line and a gutter icon
-    const decorationType = vscode.window.createTextEditorDecorationType({
-        backgroundColor: 'rgba(255, 0, 0, 0.3)', // Red background color with opacity
-    });
-    // Define a hover provider to display information when the user hovers over the gutter icon
-    const hoverProvider = vscode.languages.registerHoverProvider(document.languageId, {
-        provideHover: (document, position, token) => {
-			for (const workload of workloads) {
-				if (position.line == workloadPositionsInText[workload.workload_position]) {
-					return new vscode.Hover(getHoverMessage(workloads.filter(w => w.workload_position === workload.workload_position)));
-				}
-			}
-        }
-    });
-	const uniqueSmellKubernetess = workloads.reduce((acc: SmellKubernetes[], current: SmellKubernetes) => {
-		if (!acc.some(item => item.workload_position === current.workload_position)) {
-			acc.push(current);
-		}
-		return acc;
-	}, []);
-	const ranges: vscode.Range[] = [];
-    uniqueSmellKubernetess.forEach(workload => {
-		const lineRange = document.lineAt(workloadPositionsInText[workload.workload_position]).range;
-        ranges.push(lineRange);
-    });
-	editor.setDecorations(decorationType, ranges);
-    context.subscriptions.push(hoverProvider);
+	registerHover(context, document, workloads, workloadPositionsInText);
+    colourLine(editor, workloads, workloadPositionsInText);
 }

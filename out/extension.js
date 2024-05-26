@@ -31,7 +31,7 @@ exports.deactivate = exports.activate = void 0;
 // Import the module and reference it with the alias vscode in your code below
 const vscode = __importStar(require("vscode"));
 const dotenv_1 = __importDefault(require("dotenv"));
-const commands_1 = require("./commands");
+const events_1 = require("./events");
 function getApiUrl() {
     dotenv_1.default.config();
     const apiUrl = process.env.API_URL;
@@ -44,7 +44,8 @@ function getApiUrl() {
 // Your extension is activated the very first time the command is executed
 function activate(context) {
     const apiUrl = getApiUrl();
-    let disposable = vscode.commands.registerCommand('extension.inspectFile', () => { commands_1.pluginCommands.analyzeFile(context, apiUrl); });
+    let disposable = vscode.commands.registerCommand('extension.inspectFile', () => { events_1.events.analyzeFile(context, apiUrl); });
+    vscode.workspace.onDidCloseTextDocument((document) => { events_1.events.onCloseFile(document); });
     context.subscriptions.push(disposable);
 }
 exports.activate = activate;

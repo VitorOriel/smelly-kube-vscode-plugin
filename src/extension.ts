@@ -3,7 +3,7 @@
 import * as vscode from 'vscode';
 import dotenv from 'dotenv'; 
 
-import { pluginCommands } from './commands';
+import { events } from './events';
 
 function getApiUrl(): string {
 	dotenv.config();
@@ -19,7 +19,8 @@ function getApiUrl(): string {
 export function activate(context: vscode.ExtensionContext) {
 	const apiUrl = getApiUrl();
 	
-	let disposable = vscode.commands.registerCommand('extension.inspectFile', () => { pluginCommands.analyzeFile(context, apiUrl); });
+	let disposable = vscode.commands.registerCommand('extension.inspectFile', () => { events.analyzeFile(context, apiUrl); });
+	vscode.workspace.onDidCloseTextDocument((document: vscode.TextDocument) => { events.onCloseFile(document); });
 	context.subscriptions.push(disposable);
 }
 
