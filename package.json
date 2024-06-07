@@ -14,8 +14,8 @@
   "contributes": {
     "commands": [
       {
-        "command": "extension.inspectFile",
-        "title": "Inspect File"
+        "command": "extension.analyzeFile",
+        "title": "Analyze file for vulnerabilities"
       }
     ]
   },

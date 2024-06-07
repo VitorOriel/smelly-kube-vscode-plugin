@@ -44,7 +44,7 @@ function getApiUrl() {
 // Your extension is activated the very first time the command is executed
 function activate(context) {
     const apiUrl = getApiUrl();
-    let disposable = vscode.commands.registerCommand('extension.inspectFile', () => { events_1.events.analyzeFile(context, apiUrl); });
+    let disposable = vscode.commands.registerCommand('extension.analyzeFile', () => { events_1.events.analyzeFile(context, apiUrl); });
     vscode.workspace.onDidCloseTextDocument((document) => { events_1.events.onCloseFile(document); });
     context.subscriptions.push(disposable);
 }

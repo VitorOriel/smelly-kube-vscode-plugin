@@ -19,7 +19,7 @@ function getApiUrl(): string {
 export function activate(context: vscode.ExtensionContext) {
 	const apiUrl = getApiUrl();
 	
-	let disposable = vscode.commands.registerCommand('extension.inspectFile', () => { events.analyzeFile(context, apiUrl); });
+	let disposable = vscode.commands.registerCommand('extension.analyzeFile', () => { events.analyzeFile(context, apiUrl); });
 	vscode.workspace.onDidCloseTextDocument((document: vscode.TextDocument) => { events.onCloseFile(document); });
 	context.subscriptions.push(disposable);
 }
