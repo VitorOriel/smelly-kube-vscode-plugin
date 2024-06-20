@@ -1,6 +1,6 @@
 {
-  "name": "mestrado-vscode-plugin",
-  "displayName": "mestrado-vscode-plugin",
+  "name": "smelly-kube-vscode-plugin",
+  "displayName": "smelly-kube-vscode-plugin",
   "description": "",
   "version": "0.0.1",
   "engines": {

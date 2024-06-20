@@ -1,6 +1,6 @@
-# mestrado-vscode-plugin README
+# smelly-kube-vscode-plugin README
 
-This is the README for your extension "mestrado-vscode-plugin". After writing up a brief description, we recommend including the following sections.
+This is the README for your extension "smelly-kube-vscode-plugin". After writing up a brief description, we recommend including the following sections.
 
 ## Features
 
