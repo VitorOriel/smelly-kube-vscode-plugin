@@ -3,6 +3,7 @@
   "displayName": "smelly-kube-vscode-plugin",
   "description": "",
   "version": "0.0.1",
+  "publisher": "vitorwixmix",
   "engines": {
     "vscode": "^1.87.0"
   },
