@@ -3,12 +3,7 @@ import * as vscode from 'vscode';
 import { SmellKubernetes, Response, RequestError } from './models';
 import { sendFile } from './requests';
 
-interface HoverProviderInfo {
-	disposable: vscode.Disposable;
-	fileName: string;
-}
-
-const hoverProviders: Map<vscode.TextDocument, HoverProviderInfo> = new Map();
+const hoverProvidersMap: Map<vscode.TextDocument, vscode.Disposable[]> = new Map();
 
 export namespace events {
 	export function analyzeFile(context: vscode.ExtensionContext, apiUrl: string) {
@@ -33,9 +28,11 @@ export namespace events {
 	}
 
 	export function onCloseFile(document: vscode.TextDocument) {
-		const providerInfo = hoverProviders.get(document);
-		if (providerInfo !== undefined) {
-			providerInfo.disposable.dispose();
+		const hoverProviders = hoverProvidersMap.get(document);
+		if (hoverProviders !== undefined) {
+			for (const hoverProvider of hoverProviders) {
+				hoverProvider.dispose();
+			}
 		}
 	}
 }
@@ -51,27 +48,29 @@ function getSmellKubernetessFromResponse(data: Response): SmellKubernetes[] {
 	return workloads;
 }
 
-function getHoverMessage(workloads: SmellKubernetes[]): string {
+function getHoverMessage(workload: SmellKubernetes): string {
 	let message: string = "";
-	workloads.forEach((workload) => {
-		message = message.concat(`\tIssue: ${workload.message}\n\tFix: ${workload.suggestion}`);
-		message = message.concat("\n\n", "─".repeat(40), "\n\n");
-	});
+	message = message.concat(`\tIssue: ${workload.message}\n\tFix: ${workload.suggestion}`);
 	return message;
 }
 
 function registerHover(context: vscode.ExtensionContext, document: vscode.TextDocument, workloads: SmellKubernetes[], workloadPositionsInText: number[]) {
-	const hoverProvider = vscode.languages.registerHoverProvider(document.languageId, {
-		provideHover: (document, position, token) => {
-			for (const workload of workloads) {
+	for (const workload of workloads) {
+		const hoverProvider = vscode.languages.registerHoverProvider(document.languageId, {
+			provideHover: (document, position, token) => {
 				if (position.line == workloadPositionsInText[workload.workload_position]) {
-					return new vscode.Hover(getHoverMessage(workloads.filter(w => w.workload_position === workload.workload_position)));
+					return new vscode.Hover(getHoverMessage(workload));
 				}
 			}
+		});
+		context.subscriptions.push(hoverProvider);
+		let hoverProviders = hoverProvidersMap.get(document);
+		if (hoverProviders === undefined) {
+			hoverProviders = [] as vscode.Disposable[];
 		}
-	});
-	context.subscriptions.push(hoverProvider);
-	hoverProviders.set(document, {disposable: hoverProvider, fileName: document.fileName} as HoverProviderInfo);
+		hoverProviders.push(hoverProvider);
+		hoverProvidersMap.set(document, hoverProviders);
+	}
 }
 
 function colourLine(editor: vscode.TextEditor, workloads: SmellKubernetes[], workloadPositionsInText: number[]) {

@@ -26,7 +26,7 @@ Object.defineProperty(exports, "__esModule", { value: true });
 exports.events = void 0;
 const vscode = __importStar(require("vscode"));
 const requests_1 = require("./requests");
-const hoverProviders = new Map();
+const hoverProvidersMap = new Map();
 var events;
 (function (events) {
     function analyzeFile(context, apiUrl) {
@@ -51,9 +51,11 @@ var events;
     }
     events.analyzeFile = analyzeFile;
     function onCloseFile(document) {
-        const providerInfo = hoverProviders.get(document);
-        if (providerInfo !== undefined) {
-            providerInfo.disposable.dispose();
+        const hoverProviders = hoverProvidersMap.get(document);
+        if (hoverProviders !== undefined) {
+            for (const hoverProvider of hoverProviders) {
+                hoverProvider.dispose();
+            }
         }
     }
     events.onCloseFile = onCloseFile;
@@ -68,26 +70,28 @@ function getSmellKubernetessFromResponse(data) {
     workloads.sort((a, b) => a.workload_position - b.workload_position);
     return workloads;
 }
-function getHoverMessage(workloads) {
+function getHoverMessage(workload) {
     let message = "";
-    workloads.forEach((workload) => {
-        message = message.concat(`\tIssue: ${workload.message}\n\tFix: ${workload.suggestion}`);
-        message = message.concat("\n\n", "─".repeat(40), "\n\n");
-    });
+    message = message.concat(`\tIssue: ${workload.message}\n\tFix: ${workload.suggestion}`);
     return message;
 }
 function registerHover(context, document, workloads, workloadPositionsInText) {
-    const hoverProvider = vscode.languages.registerHoverProvider(document.languageId, {
-        provideHover: (document, position, token) => {
-            for (const workload of workloads) {
+    for (const workload of workloads) {
+        const hoverProvider = vscode.languages.registerHoverProvider(document.languageId, {
+            provideHover: (document, position, token) => {
                 if (position.line == workloadPositionsInText[workload.workload_position]) {
-                    return new vscode.Hover(getHoverMessage(workloads.filter(w => w.workload_position === workload.workload_position)));
+                    return new vscode.Hover(getHoverMessage(workload));
                 }
             }
+        });
+        context.subscriptions.push(hoverProvider);
+        let hoverProviders = hoverProvidersMap.get(document);
+        if (hoverProviders === undefined) {
+            hoverProviders = [];
         }
-    });
-    context.subscriptions.push(hoverProvider);
-    hoverProviders.set(document, { disposable: hoverProvider, fileName: document.fileName });
+        hoverProviders.push(hoverProvider);
+        hoverProvidersMap.set(document, hoverProviders);
+    }
 }
 function colourLine(editor, workloads, workloadPositionsInText) {
     const decorationType = vscode.window.createTextEditorDecorationType({
