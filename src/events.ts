@@ -74,9 +74,6 @@ function registerHover(context: vscode.ExtensionContext, document: vscode.TextDo
 }
 
 function colourLine(editor: vscode.TextEditor, workloads: SmellKubernetes[], workloadPositionsInText: number[]) {
-	const decorationType = vscode.window.createTextEditorDecorationType({
-		backgroundColor: 'rgba(255, 0, 0, 0.3)',
-	});
 	const uniqueSmellKubernetess = workloads.reduce((acc: SmellKubernetes[], current: SmellKubernetes) => {
 		if (!acc.some(item => item.workload_position === current.workload_position)) {
 			acc.push(current);
@@ -88,7 +85,19 @@ function colourLine(editor: vscode.TextEditor, workloads: SmellKubernetes[], wor
 		const lineRange = editor.document.lineAt(workloadPositionsInText[workload.workload_position]).range;
 		ranges.push(lineRange);
 	});
-	editor.setDecorations(decorationType, ranges);
+	const backgroundDecoration = vscode.window.createTextEditorDecorationType({
+		backgroundColor: 'rgba(255, 0, 0, 0.3)',
+		overviewRulerColor: 'red',
+		overviewRulerLane: vscode.OverviewRulerLane.Full,
+		isWholeLine: true,
+	});
+	editor.setDecorations(backgroundDecoration, ranges);
+	const boerderDecoration = vscode.window.createTextEditorDecorationType({
+		borderStyle: "dotted",
+		borderColor: "white",
+		borderWidth: "0.5px",
+	});
+	editor.setDecorations(boerderDecoration, ranges);
 }
 
 function decorateLines(context: vscode.ExtensionContext, editor: vscode.TextEditor, workloads: SmellKubernetes[]) {
