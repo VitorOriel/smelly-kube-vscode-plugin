@@ -92,12 +92,12 @@ function colourLine(editor: vscode.TextEditor, workloads: SmellKubernetes[], wor
 		isWholeLine: true,
 	});
 	editor.setDecorations(backgroundDecoration, ranges);
-	const boerderDecoration = vscode.window.createTextEditorDecorationType({
+	const borderDecoration = vscode.window.createTextEditorDecorationType({
 		borderStyle: "dotted",
 		borderColor: "white",
 		borderWidth: "0.5px",
 	});
-	editor.setDecorations(boerderDecoration, ranges);
+	editor.setDecorations(borderDecoration, ranges);
 }
 
 function decorateLines(context: vscode.ExtensionContext, editor: vscode.TextEditor, workloads: SmellKubernetes[]) {
