@@ -72,7 +72,8 @@ function getSmellKubernetessFromResponse(data) {
 }
 function getHoverMessage(workload) {
     let message = "";
-    message = message.concat(`\tIssue: ${workload.message}\n\tFix: ${workload.suggestion}`);
+    message = message.concat(`**Issue**: \`${workload.message}\``);
+    message = message.concat(`\n\n**Fix**: \`${workload.suggestion}\``);
     return message;
 }
 function registerHover(context, document, workloads, workloadPositionsInText) {
