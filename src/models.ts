@@ -24,5 +24,5 @@ export type Response = {
 }
 
 export type RequestError = {
-    message: string
+	message: string
 }

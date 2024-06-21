@@ -4,16 +4,16 @@ import { SmellKubernetes, Response, RequestError } from './models';
 import { sendFile } from './requests';
 
 interface HoverProviderInfo {
-    disposable: vscode.Disposable;
-    fileName: string;
+	disposable: vscode.Disposable;
+	fileName: string;
 }
 
 const hoverProviders: Map<vscode.TextDocument, HoverProviderInfo> = new Map();
 
 export namespace events {
-    export function analyzeFile(context: vscode.ExtensionContext, apiUrl: string) {
-        let editor = vscode.window.activeTextEditor;
-        if (!editor) {
+	export function analyzeFile(context: vscode.ExtensionContext, apiUrl: string) {
+		let editor = vscode.window.activeTextEditor;
+		if (!editor) {
 			vscode.window.showErrorMessage('No active text editor.');
 			return;
 		}
@@ -30,7 +30,7 @@ export namespace events {
 			.catch((error: RequestError) => {
 				vscode.window.showErrorMessage('Error occurred:', error.message);
 			});
-    }
+	}
 
 	export function onCloseFile(document: vscode.TextDocument) {
 		const providerInfo = hoverProviders.get(document);
@@ -62,22 +62,22 @@ function getHoverMessage(workloads: SmellKubernetes[]): string {
 
 function registerHover(context: vscode.ExtensionContext, document: vscode.TextDocument, workloads: SmellKubernetes[], workloadPositionsInText: number[]) {
 	const hoverProvider = vscode.languages.registerHoverProvider(document.languageId, {
-        provideHover: (document, position, token) => {
+		provideHover: (document, position, token) => {
 			for (const workload of workloads) {
 				if (position.line == workloadPositionsInText[workload.workload_position]) {
 					return new vscode.Hover(getHoverMessage(workloads.filter(w => w.workload_position === workload.workload_position)));
 				}
 			}
-        }
-    });
+		}
+	});
 	context.subscriptions.push(hoverProvider);
 	hoverProviders.set(document, {disposable: hoverProvider, fileName: document.fileName} as HoverProviderInfo);
 }
 
 function colourLine(editor: vscode.TextEditor, workloads: SmellKubernetes[], workloadPositionsInText: number[]) {
 	const decorationType = vscode.window.createTextEditorDecorationType({
-        backgroundColor: 'rgba(255, 0, 0, 0.3)',
-    });
+		backgroundColor: 'rgba(255, 0, 0, 0.3)',
+	});
 	const uniqueSmellKubernetess = workloads.reduce((acc: SmellKubernetes[], current: SmellKubernetes) => {
 		if (!acc.some(item => item.workload_position === current.workload_position)) {
 			acc.push(current);
@@ -85,10 +85,10 @@ function colourLine(editor: vscode.TextEditor, workloads: SmellKubernetes[], wor
 		return acc;
 	}, []);
 	const ranges: vscode.Range[] = [];
-    uniqueSmellKubernetess.forEach(workload => {
+	uniqueSmellKubernetess.forEach(workload => {
 		const lineRange = editor.document.lineAt(workloadPositionsInText[workload.workload_position]).range;
-        ranges.push(lineRange);
-    });
+		ranges.push(lineRange);
+	});
 	editor.setDecorations(decorationType, ranges);
 }
 
@@ -105,5 +105,5 @@ function decorateLines(context: vscode.ExtensionContext, editor: vscode.TextEdit
 		}
 	}
 	registerHover(context, document, workloads, workloadPositionsInText);
-    colourLine(editor, workloads, workloadPositionsInText);
+	colourLine(editor, workloads, workloadPositionsInText);
 }
