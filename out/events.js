@@ -124,6 +124,9 @@ function decorateLines(context, editor, workloads) {
     const document = editor.document;
     const lines = document.getText().split('\n');
     let workloadPositionsInText = [];
+    if (lines[0] === "---") {
+        workloadPositionsInText.push(0);
+    }
     const workloadSignature = "apiVersion";
     for (const [i, value] of lines.entries()) {
         if (value.substring(0, workloadSignature.length) === workloadSignature) {
