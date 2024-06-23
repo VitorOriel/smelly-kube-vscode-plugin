@@ -4,6 +4,10 @@
   "description": "",
   "version": "0.0.1",
   "publisher": "vitorwixmix",
+  "repository": {
+    "type": "git",
+    "url": "https://github.com/VitorOriel/smelly-kube-vscode-plugin"
+  },
   "engines": {
     "vscode": "^1.87.0"
   },
