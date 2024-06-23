@@ -2,7 +2,7 @@
   "name": "smelly-kube-vscode-plugin",
   "displayName": "smelly-kube-vscode-plugin",
   "description": "",
-  "version": "0.0.1",
+  "version": "0.0.2",
   "publisher": "vitorwixmix",
   "repository": {
     "type": "git",
