@@ -14,11 +14,16 @@ This is the Visual Studio Code plugin for [Smelly Kube](https://github.com/Vitor
 3. Press `F5` to open a new window with your extension loaded through your Visual Studio Code;
 4. Run the command from the command palette by pressing (`F1` or `Cmd+Shift+P` on Mac) and typing `Analyze file for vulnerabilities`;
 
+## Operating System
+
+The extension was developed under Ubuntu 22.04.4 LTS
+
 ## Technologies
 
 - TypeScript
-- Node
+- Node v20.13.1
+- npm v10.5.2
 
 ## Dependencies
 
-Dependencies can be found in [package.json](package.json)
+Dependencies can be found in [package.json](package.json), and for installing them you must install [node](https://nodejs.org/en/download/package-manager)
