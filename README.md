@@ -23,6 +23,7 @@ The extension was developed under Ubuntu 22.04.4 LTS
 - TypeScript
 - Node v20.13.1
 - npm v10.5.2
+- Visual Studio Code v1.92.0
 
 ## Dependencies
 
