@@ -11,7 +11,7 @@ function getApiUrl(): string {
 	if (apiUrl == undefined) {
 		throw Error("the environment variable API_URL must be set");
 	}
-	return String(process.env.API_URL);
+	return apiUrl;
 }
 
 // This method is called when your extension is activated
