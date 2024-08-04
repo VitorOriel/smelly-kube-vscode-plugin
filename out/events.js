@@ -42,11 +42,11 @@ var events;
         };
         (0, requests_1.sendFile)(apiUrl, bodyData)
             .then((responseJson) => {
-            vscode.window.showInformationMessage('Number of vulnerabilities found: ' + responseJson.meta.totalOfSmells);
+            vscode.window.showInformationMessage(`Number of vulnerabilities found: ${responseJson.meta.totalOfSmells}`);
             decorateLines(context, editor, getSmellKubernetessFromResponse(responseJson));
         })
             .catch((error) => {
-            vscode.window.showErrorMessage('Error occurred:', error.message);
+            vscode.window.showErrorMessage(`An error occurs during the request: ${error.message}`);
         });
     }
     events.analyzeFile = analyzeFile;
