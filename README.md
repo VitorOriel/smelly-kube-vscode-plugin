@@ -1,6 +1,6 @@
 # smelly-kube-vscode-plugin
 
-This is the Visual Studio Code plugin for [Smelly Kube](https://github.com/VitorOriel/security-smells-api), used to identify security vulnerabilities in Kubernetes manifests. The extension is already published in [vscode marketplace](https://marketplace.visualstudio.com/items?itemName=vitorwixmix.smelly-kube-vscode-plugin), and can be continuously improved with new features. Feel free to contribute with the extension.
+This is the Visual Studio Code plugin for [Smelly Kube](https://github.com/VitorOriel/security-smells-api), used to identify security smells in Kubernetes manifests. The extension is already published in [vscode marketplace](https://marketplace.visualstudio.com/items?itemName=vitorwixmix.smelly-kube-vscode-plugin), and can be continuously improved with new features. Feel free to contribute with the extension.
 
 ## Running the extension
 
