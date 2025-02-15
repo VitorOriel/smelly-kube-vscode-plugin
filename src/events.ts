@@ -51,7 +51,7 @@ function getSmellKubernetessFromResponse(data: Response): SmellKubernetes[] {
 function getHoverMessage(workload: SmellKubernetes): string {
 	let message: string = "";
 	message = message.concat(`**Issue**: \`${workload.message}\``);
-	message = message.concat(`\n\n**Fix**: \`${workload.suggestion}\``);
+	message = message.concat(`\n\n**Suggestion**: \`${workload.suggestion}\``);
 	return message;
 }
 
